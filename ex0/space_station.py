@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ValidationError
 from datetime import datetime
 
+
 class SpaceStation(BaseModel):
     station_id: str = Field(..., min_length=3, max_length=10)
     name: str = Field(..., min_length=1, max_length=50)
@@ -10,18 +11,19 @@ class SpaceStation(BaseModel):
     last_maintenance: datetime
     is_operational: bool = True
     notes: str | None = Field(default=None, max_length=200)
-    
+
+
 def main() -> None:
     print("Space Station Data Validation")
     print("========================================")
-        
+
     valid_station = SpaceStation(
         station_id="ISS001",
         name="International Space Station",
         crew_size=6,
         power_level=85.5,
         oxygen_level=92.3,
-        last_maintenance="2026-09-08T12:50:00",
+        last_maintenance=datetime(2026, 9, 8, 12, 50, 0),
         is_operational=True
     )
     print("Valid station created:")
@@ -32,7 +34,7 @@ def main() -> None:
     print(f"Oxygen: {valid_station.oxygen_level}%")
     status = "Operational" if valid_station.is_operational else "Offline"
     print(f"Status: {status}")
-    
+
     print()
     print("========================================")
     print("Expected validation error:")
@@ -43,11 +45,12 @@ def main() -> None:
             crew_size=25,
             power_level=85.5,
             oxygen_level=92.3,
-            last_maintenance="2026-09-08T12:50:00",
+            last_maintenance=datetime(2026, 9, 8, 12, 50, 0),
             is_operational=True
         )
     except ValidationError as err:
         print(repr(err.errors()[0]['msg']))
-    
+
+
 if __name__ == "__main__":
     main()

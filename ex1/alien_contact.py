@@ -1,6 +1,7 @@
 from enum import Enum
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, model_validator, ValidationError
 from datetime import datetime
+
 
 class ContactType(str, Enum):
     RADIO = "radio"
@@ -19,7 +20,7 @@ class AlienContact(BaseModel):
     witness_count: int = Field(..., ge=1, le=100)
     message_received: str | None = Field(default=None, max_length=500)
     is_verified: bool = False
-    
+
     @model_validator(mode='after')
     def validate_rules(self) -> "AlienContact":
         if not self.contact_id.startswith("AC"):
@@ -27,13 +28,20 @@ class AlienContact(BaseModel):
 
         if self.contact_type == ContactType.PHYSICAL and not self.is_verified:
             raise ValueError("Physical contact reports must be verified")
-        
-        if self.contact_type == ContactType.TELEPATHIC and self.witness_count < 3:
-            raise ValueError("Telepathic contact requires at least 3 witnesses")
-        
+
+        if (
+            self.contact_type == ContactType.TELEPATHIC
+            and self.witness_count < 3
+        ):
+            raise ValueError(
+                "Telepathic contact requires at least 3 witnesses"
+                )
+
         if self.signal_strength > 7.0 and self.message_received is None:
-            raise ValueError("Strong signals (> 7.0) should include received messages")
-        
+            raise ValueError(
+                "Strong signals (> 7.0) should include received messages"
+                )
+
         return self
 
 
@@ -43,7 +51,7 @@ def test_valid_contact() -> None:
 
     contact = AlienContact(
         contact_id="AC_2024_001",
-        timestamp="2026-09-14T14:45:00",
+        timestamp=datetime(2026, 9, 14, 14, 45, 0),
         location="Area 51, Nevada",
         contact_type=ContactType.RADIO,
         signal_strength=8.5,
@@ -61,7 +69,7 @@ def test_valid_contact() -> None:
     print(f"Witnesses: {contact.witness_count}")
     print(f"Message: {contact.message_received}")
     print()
-    
+
 
 def test_invalid_contact() -> None:
     print("======================================")
@@ -69,7 +77,7 @@ def test_invalid_contact() -> None:
     try:
         AlienContact(
             contact_id="AC_2024_001",
-            timestamp="2026-09-14T14:45:00",
+            timestamp=datetime(2026, 9, 14, 14, 45, 0),
             location="Area 51, Nevada",
             contact_type=ContactType.TELEPATHIC,
             signal_strength=8.5,
@@ -77,7 +85,7 @@ def test_invalid_contact() -> None:
             witness_count=2,
             message_received="Greetings from Zeta Reticuli"
         )
-    except ValueError as err:
+    except ValidationError as err:
         print(repr(err.errors()[0]['msg']))
 
 
